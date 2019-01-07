@@ -9,6 +9,9 @@ class Adb_Handler:
         return (len(result) > 0 and result.splitlines()[0] != 'adb not found')
 
     def getDeviceList(self):
+        if not self.adbExists(self):
+            return []
+
         cmd = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE)
         result = cmd.stdout.decode('utf-8').splitlines()
         result = result[1:len(result) - 1]
