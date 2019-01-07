@@ -1,6 +1,5 @@
 import sys
 import subprocess
-import socket
 import re
 
 try:
@@ -84,8 +83,6 @@ class App:
         self.devicesSpinBox.configure(buttonbackground="#d9d9d9")
         self.devicesSpinBox.configure(selectbackground="#c4c4c4")
         self.devicesSpinBox.configure(textvariable=Gui_support.spinbox)
-        self.value_list = self.adbHandler.getDeviceList(AdbHandler)
-        self.devicesSpinBox.configure(values=self.value_list)
         self.devicesSpinBox.configure(width=295)
 
         self.Label2 = tk.Label(top)
@@ -132,13 +129,13 @@ class App:
         self.sendBtn.configure(width=81)
 
         self.Label4 = tk.Label(top)
-        self.Label4.place(relx=0.044, rely=0.653, height=24, width=113)
+        self.Label4.place(relx=0.044, rely=0.653, height=24, width=34)
         self.Label4.configure(background="#d9d9d9")
         self.Label4.configure(foreground="#000000")
-        self.Label4.configure(text='''http://''' + socket.gethostbyname(socket.getfqdn()) + ''':''')
+        self.Label4.configure(text='''Port''')
 
         self.portEntry = tk.Entry(top)
-        self.portEntry.place(relx=0.327, rely=0.653,height=27, relwidth=0.159)
+        self.portEntry.place(relx=0.132, rely=0.653,height=27, relwidth=0.159)
         self.portEntry.configure(background="white")
         self.portEntry.configure(font="TkFixedFont")
         self.portEntry.configure(foreground="#000000")
@@ -195,9 +192,24 @@ class App:
         self.TSeparator1_2 = ttk.Separator(top)
         self.TSeparator1_2.place(relx=0.022, rely=0.113, relwidth=0.949)
 
+        self.Label6 = tk.Label(top)
+        self.Label6.place(relx=0.508, rely=0.900, height=24, width=130)
+        self.Label6.configure(background="#d9d9d9")
+        self.Label6.configure(foreground="#000000")
+        self.Label6.configure(text='''Server: stopped''')
+
         if not self.adbHandler.adbExists(AdbHandler):
             showerror('Error', 'Cannot run adb.\nMake sure PATH vars has been set!')
             exit()
+
+        value_list = self.adbHandler.getDeviceList(AdbHandler)
+
+        if len(value_list) == 0:
+            showerror('Error', 'Cannot find USB debugging enabled device(s).\nMake sure device is connected and has USB debugging enabled')
+            exit()
+
+        self.devicesSpinBox.configure(values=value_list)
+
         top.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def on_closing(self):
@@ -212,11 +224,12 @@ class App:
         key = str(self.keyEntry.get())
 
         if deviceId != '' and port != '' and key != '':
-            host = socket.gethostbyname(socket.getfqdn())
-            server.start(server, host, int(port), key, deviceId, True)
+            server.start(server, '0.0.0.0', int(port), key, deviceId, True)
             self.serverStarted = True
             self.portEntry.config(state='disabled')
             self.keyEntry.config(state='disabled')
+            self.startBtn.config(state='disabled')
+            self.Label6.configure(text='''Server: running''')
         else:
             showerror('Error', 'Port and key cannot be empty!\nEnter valid port number and a key.')
 
@@ -226,7 +239,8 @@ class App:
             self.serverStarted = False
             self.portEntry.config(state='normal')
             self.keyEntry.config(state='normal')
-
+            self.startBtn.config(state='normal')
+            self.Label6.configure(text='''Server: stopped''')
 
     def sendSms(self):
         receiver = str(self.receiverEntry.get())
